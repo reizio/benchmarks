@@ -1,0 +1,55 @@
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron:  '30 17 * * *'
+
+name: Benchmarks
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        repository: reizio/reiz.io
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Copy reiz config
+      run: |
+        mkdir -p ~/.local/
+        mkdir -p .temp_reiz
+        cp static/configs/ci_config.json ~/.local/reiz.json
+
+    - name: Install dependencies
+      run: |
+        python -m pip install -r requirements.txt
+        python -m pip install -r requirements-dev.txt
+        python -m pip install -e .
+
+    - name: Install EdgeDB
+      uses: edgedb/setup-edgedb@v1
+      with:
+        server-version: nightly
+        cli-version: nightly
+
+    - name: Benchmark
+      env:
+        EDGEDB_SERVER_BIN: edgedb-server
+      run: |
+        mkdir -p benchmarks/
+        python tests/runner.py --change-db-schema \
+        --start-edgedb-server --do-not-fail \
+        --run-benchmarks --benchmark-iterations 3 \
+        --benchmark-results-file benchmark_report.json
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: benchmark-report
+        path: benchmark_report.json
