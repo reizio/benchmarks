@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import io
 import json
@@ -66,7 +67,7 @@ def process_results(original_results):
     return results
 
 
-async def main():
+async def runner(data_file):
     auth = aiohttp.BasicAuth(GH_USERNAME, os.getenv("GITHUB_TOKEN"))
 
     async with aiohttp.ClientSession() as session:
@@ -78,7 +79,17 @@ async def main():
             date: report
             async for date, report in collect_reports(gh, session, auth)
         }
-        results = process_results(results)
+        with open(data_file, "w") as stream:
+            json.dump(process_results(results), stream, indent=4)
 
 
-asyncio.run(main())
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data-file", type=str, default="static/results.json")
+
+    options = parser.parse_args()
+    asyncio.run(runner(options.data_file))
+
+
+if __name__ == "__main__":
+    main()

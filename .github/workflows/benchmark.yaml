@@ -53,3 +53,31 @@ jobs:
       with:
         name: benchmark-report
         path: benchmark_report.json
+
+  commit:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install dependencies
+      run: python -m pip install -r requirements.txt
+
+    - name: Prepare results
+      env:
+        GITHUB_TOKEN: ${{ secrets.REESE_TOKEN }}
+      run: |
+        mkdir -p static/
+        python analyze_artifacts.py --data-file static/results.json
+
+    - name: Commit results
+      run: |
+        git config --global user.name 'ReeseBot'
+        git config --global user.email 'isidentical+reesebot@gmail.com'
+        git add static/
+        git commit -am "static: upload results" --allow-empty
+        git push
