@@ -47,11 +47,12 @@ async def collect_results(gh, session, auth):
 
         zip_obj = zipfile.ZipFile(buffer)
         assert len(zip_obj.filelist) == 1
+        assert zip_obj.filelist[0].filename == "benchmark_report.json"
 
-        with zip_obj.open("benchmark_results.json") as stream:
-            result = json.load(stream)
+        with zip_obj.open("benchmark_report.json") as stream:
+            report = json.load(stream)
 
-        yield artifact["updated_at"], result
+        yield artifact["updated_at"], report
 
 
 async def main():
