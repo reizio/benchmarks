@@ -45,7 +45,7 @@ jobs:
         mkdir -p benchmarks/
         python tests/runner.py --change-db-schema \
         --start-edgedb-server --do-not-fail \
-        --run-benchmarks --benchmark-iterations 3 \
+        --run-benchmarks --benchmark-iterations 60 \
         --benchmark-results-file benchmark_report.json
 
     - name: Upload Artifacts
