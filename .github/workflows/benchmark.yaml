@@ -55,6 +55,7 @@ jobs:
         path: benchmark_report.json
 
   commit:
+    needs: benchmark
     runs-on: ubuntu-18.04
 
     steps:
