@@ -2,7 +2,9 @@ import asyncio
 import io
 import json
 import os
+import statistics
 import zipfile
+from collections import defaultdict
 
 import aiohttp
 from gidgethub.aiohttp import GitHubAPI
@@ -31,7 +33,7 @@ async def getiter(gh, url, identifier, **url_vars):
             yield item
 
 
-async def collect_results(gh, session, auth):
+async def collect_reports(gh, session, auth):
     total_count = 0
     async for artifact in getiter(
         gh,
@@ -56,6 +58,14 @@ async def collect_results(gh, session, auth):
         yield artifact["updated_at"], report
 
 
+def process_results(original_results):
+    results = defaultdict(dict)
+    for date, report in original_results.items():
+        for key, timings in report.items():
+            results[key][date] = statistics.fmean(timings)
+    return results
+
+
 async def main():
     auth = aiohttp.BasicAuth(GH_USERNAME, os.getenv("GITHUB_TOKEN"))
 
@@ -65,9 +75,10 @@ async def main():
         )
 
         results = {
-            date: result
-            async for date, result in collect_results(gh, session, auth)
+            date: report
+            async for date, report in collect_reports(gh, session, auth)
         }
+        results = process_results(results)
 
 
 asyncio.run(main())
